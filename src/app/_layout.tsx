@@ -27,5 +27,13 @@ export default function RootLayout() {
 
   if (!fontsLoaded) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="onboarding/splash" />
+      <Stack.Screen name="onboarding/problem" />
+      <Stack.Screen name="onboarding/signup" />
+      <Stack.Screen name="onboarding/setup" />
+      <Stack.Screen name="(tabs)" />
+    </Stack>
+  );
 }
