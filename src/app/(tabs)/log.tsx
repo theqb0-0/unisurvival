@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
+import { supabase } from '../../lib/supabase';
 
 const categories = [
   { label: 'Food', icon: 'basket-outline' },
@@ -19,7 +20,51 @@ const numbers = ['1','2','3','4','5','6','7','8','9','.','0','⌫'];
 export default function LogScreen() {
   const [amount, setAmount] = useState('0');
   const [selectedCategory, setSelectedCategory] = useState('Food');
+  const [note, setNote] = useState('');
+  const [loading, setLoading] = useState(false);
+  const handleLog = async () => {
+    if (amount === '0' || amount === '') {
+      Alert.alert('Quick check', 'Enter an amount first.');
+      return;
+    }
 
+    setLoading(true);
+
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      // DEV MODE: just reset and show success
+      Alert.alert('Logged', `R${amount} in ${selectedCategory} saved.`);
+      setAmount('0');
+      setSelectedCategory('Food');
+      setNote('');
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('transactions')
+      .insert({
+        user_id: user.id,
+        amount: parseFloat(amount),
+        category: selectedCategory,
+        note: note.trim() || null,
+        type: 'expense',
+        date: new Date().toISOString(),
+      });
+
+    if (error) {
+      setLoading(false);
+      Alert.alert('Something went wrong', error.message);
+      return;
+    }
+
+    setLoading(false);
+    setAmount('0');
+    setSelectedCategory('Food');
+    setNote('');
+    Alert.alert('Done', `R${amount} in ${selectedCategory} logged.`);
+  };
   const handleNumber = (val: string) => {
     if (val === '⌫') {
       setAmount(prev => prev.length > 1 ? prev.slice(0, -1) : '0');
@@ -79,7 +124,13 @@ export default function LogScreen() {
           </View>
           <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
             <Ionicons name="pencil-outline" size={16} color="#16A34A" />
-            <Text style={[styles.detailLabel, { color: '#9CA3AF' }]}>Note (optional)</Text>
+            <TextInput
+              style={[styles.detailLabel, { flex: 1 }]}
+              placeholder="Note (optional)"
+              placeholderTextColor="#9CA3AF"
+              value={note}
+              onChangeText={setNote}
+            />
           </View>
         </View>
       </ScrollView>
@@ -97,8 +148,15 @@ export default function LogScreen() {
       </View>
 
       <View style={styles.ctaWrap}>
-        <TouchableOpacity style={styles.logBtn}>
-          <Text style={styles.logBtnText}>LOG IT</Text>
+        <TouchableOpacity
+          style={[styles.logBtn, loading && { opacity: 0.7 }]}
+          onPress={handleLog}
+          disabled={loading}
+        >
+          {loading
+            ? <ActivityIndicator color="#FFFFFF" />
+            : <Text style={styles.logBtnText}>LOG IT</Text>
+          }
         </TouchableOpacity>
       </View>
 
