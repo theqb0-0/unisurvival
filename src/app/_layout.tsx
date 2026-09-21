@@ -1,11 +1,12 @@
-import { Stack } from 'expo-router';
 import {
-  useFonts,
   Roboto_300Light,
   Roboto_400Regular,
   Roboto_500Medium,
   Roboto_700Bold,
+  useFonts,
 } from '@expo-google-fonts/roboto';
+import { Ionicons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
@@ -17,6 +18,7 @@ export default function RootLayout() {
     Roboto_400Regular,
     Roboto_500Medium,
     Roboto_700Bold,
+    ...Ionicons.font,
   });
 
   useEffect(() => {
@@ -28,10 +30,8 @@ export default function RootLayout() {
   if (!fontsLoaded) return null;
 
   return (
-    <Stack
-      initialRouteName="(tabs)"
-      screenOptions={{ headerShown: false }}
-    >
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="onboarding/splash" />
       <Stack.Screen name="onboarding/problem" />

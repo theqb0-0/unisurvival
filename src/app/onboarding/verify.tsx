@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
@@ -18,7 +18,20 @@ import { supabase } from '../../lib/supabase';
     const [code, setCode] = useState(['', '', '', '', '', '']);
     const [loading, setLoading] = useState(false);
     const inputs = useRef<TextInput[]>([]);
+    const [timer, setTimer] = useState(60);
+    const [canResend, setCanResend] = useState(false);
   
+    useEffect(() => {
+      if (timer <= 0) {
+        setCanResend(true);
+        return;
+      }
+      const interval = setInterval(() => {
+        setTimer(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }, [timer]);
+
     const handleChange = (val: string, index: number) => {
       const newCode = [...code];
       newCode[index] = val;
@@ -99,10 +112,23 @@ import { supabase } from '../../lib/supabase';
             ))}
           </View>
   
-          <TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              if (!canResend) return;
+              await supabase.auth.signInWithOtp({
+                email: email as string,
+                options: { shouldCreateUser: false },
+              });
+              setTimer(60);
+              setCanResend(false);
+              setCode(['', '', '', '', '', '']);
+            }}
+          >
             <Text style={styles.resend}>
-              Didn't get it?{' '}
-              <Text style={styles.resendLink}>Resend code</Text>
+             {canResend
+              ? <Text style={styles.resendLink}>Resend code</Text>
+              : `Resend code in ${timer}s`
+             }
             </Text>
           </TouchableOpacity>
         </View>
