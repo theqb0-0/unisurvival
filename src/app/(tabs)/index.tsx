@@ -1,16 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { ThemeColors } from '../../theme/colors';
+import { useTheme } from '../../theme/ThemeContext';
 
 const categories = [
   { label: 'Food', icon: 'basket-outline' },
@@ -20,6 +22,8 @@ const categories = [
 ];
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [profile, setProfile] = useState<any>(null);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [spent, setSpent] = useState(0);
@@ -88,7 +92,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ flex: 1 }} color="#16A34A" />
+        <ActivityIndicator style={{ flex: 1 }} color={colors.green} />
       </SafeAreaView>
     );
   }
@@ -99,7 +103,7 @@ export default function HomeScreen() {
 
         <View style={styles.header}>
           <Text style={styles.headerTitle}>UniSurvival</Text>
-          <Ionicons name="notifications-outline" size={22} color="#16A34A" />
+          <Ionicons name="notifications-outline" size={22} color={colors.green} />
         </View>
 
         <View style={styles.balanceArea}>
@@ -135,7 +139,7 @@ export default function HomeScreen() {
           <View style={styles.categoryRow}>
             {spentByCategory.map(cat => (
               <TouchableOpacity key={cat.label} style={styles.categoryItem}>
-                <Ionicons name={cat.icon as any} size={26} color="#16A34A" />
+                <Ionicons name={cat.icon as any} size={26} color={colors.grey} />
                 <Text style={styles.categoryLabel}>{cat.label}</Text>
                 <Text style={styles.categorySpent}>
                   R{cat.spent.toFixed(0)}
@@ -152,30 +156,32 @@ export default function HomeScreen() {
               <Text style={styles.seeAll}>See all</Text>
             </TouchableOpacity>
           </View>
-          {transactions.length === 0 ? (
-            <Text style={styles.emptyText}>
-              No expenses logged yet. Tap a category above to start.
-            </Text>
-          ) : (
-            transactions.slice(0, 5).map((txn, i) => (
-              <View
-                key={txn.id}
-                style={[
-                  styles.txnRow,
-                  i === Math.min(transactions.length, 5) - 1 && { borderBottomWidth: 0 }
-                ]}
-              >
-                <Ionicons name="receipt-outline" size={16} color="#16A34A" />
-                <View style={styles.txnInfo}>
-                  <Text style={styles.txnName}>{txn.category}</Text>
-                  <Text style={styles.txnDate}>{txn.note || 'No note'}</Text>
+          <View style={styles.txnCard}>
+            {transactions.length === 0 ? (
+              <Text style={styles.emptyText}>
+                 No expenses logged yet. Tap a category above to start.
+              </Text>
+            ) : (
+              transactions.slice(0, 5).map((txn, i) => (
+                <View
+                  key={txn.id}
+                  style={[
+                    styles.txnRow,
+                    i === Math.min(transactions.length, 5) - 1 && { borderBottomWidth: 0 }
+                  ]}
+                >
+                  <Ionicons name="receipt-outline" size={16} color={colors.grey} />
+                  <View style={styles.txnInfo}>
+                    <Text style={styles.txnName}>{txn.category}</Text>
+                    <Text style={styles.txnDate}>{txn.note || 'No note'}</Text>
+                  </View>
+                  <Text style={styles.txnAmount}>
+                    - R{txn.amount.toFixed(0)}
+                  </Text>
                 </View>
-                <Text style={styles.txnAmount}>
-                  - R{txn.amount.toFixed(0)}
-                </Text>
-              </View>
-            ))
-          )}
+              ))
+            )}
+          </View>
         </View>
 
       </ScrollView>
@@ -183,107 +189,119 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', paddingHorizontal: 20,
-    paddingTop: 16, paddingBottom: 4,
-  },
-  headerTitle: {
-    fontSize: 22, fontFamily: 'Roboto_700Bold', color: '#333333',
-  },
-  balanceArea: {
-    paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4,
-  },
-  greeting: {
-    fontSize: 13, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280', marginBottom: 4,
-  },
-  balance: {
-    fontSize: 42, fontFamily: 'Roboto_700Bold',
-    color: '#333333', letterSpacing: -1,
-  },
-  balanceSub: {
-    fontSize: 13, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280', marginTop: 2,
-  },
-  heroCard: {
-    backgroundColor: '#F0FDF4', borderRadius: 16, padding: 16,
-    marginHorizontal: 20, marginTop: 20,
-    shadowColor: '#041202', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.07, shadowRadius: 4, elevation: 2,
-  },
-  heroLabel: {
-    fontSize: 12, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280', marginBottom: 4,
-  },
-  heroAmount: {
-    fontSize: 22, fontFamily: 'Roboto_700Bold',
-    color: '#15803D', marginBottom: 12,
-  },
-  progressBg: {
-    backgroundColor: '#DCFCE7', borderRadius: 4,
-    height: 4, marginBottom: 8,
-  },
-  progressFill: {
-    backgroundColor: '#16A34A', borderRadius: 4, height: 4,
-  },
-  progressRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  progressLabel: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular', color: '#6B7280',
-  },
-  chip: {
-    backgroundColor: '#DCFCE7', borderRadius: 20,
-    paddingHorizontal: 10, paddingVertical: 3,
-  },
-  chipText: {
-    fontSize: 11, fontFamily: 'Roboto_500Medium', color: '#15803D',
-  },
-  section: { paddingHorizontal: 20, marginTop: 28 },
-  sectionRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 15, fontFamily: 'Roboto_700Bold',
-    color: '#333333', marginBottom: 14,
-  },
-  seeAll: {
-    fontSize: 12, fontFamily: 'Roboto_400Regular', color: '#16A34A',
-  },
-  categoryRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-  },
-  categoryItem: { alignItems: 'center', gap: 5 },
-  categoryLabel: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular', color: '#6B7280',
-  },
-  categorySpent: {
-    fontSize: 11, fontFamily: 'Roboto_500Medium', color: '#333333',
-  },
-  txnRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 13, borderBottomWidth: 0.5,
-    borderBottomColor: '#F3F4F6',
-  },
-  txnInfo: { flex: 1 },
-  txnName: {
-    fontSize: 13, fontFamily: 'Roboto_500Medium', color: '#333333',
-  },
-  txnDate: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280', marginTop: 2,
-  },
-  txnAmount: {
-    fontSize: 13, fontFamily: 'Roboto_500Medium', color: '#333333',
-  },
-  emptyText: {
-    fontSize: 13, fontFamily: 'Roboto_400Regular',
-    color: '#9CA3AF', textAlign: 'center',
-    paddingVertical: 24, lineHeight: 20,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.canvas },
+    header: {
+      flexDirection: 'row', justifyContent: 'space-between',
+      alignItems: 'center', paddingHorizontal: 20,
+      paddingTop: 16, paddingBottom: 4,
+    },
+    headerTitle: {
+      fontSize: 22, fontFamily: 'Roboto_700Bold', color: colors.textDark,
+    },
+    balanceArea: {
+      paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4,
+    },
+    greeting: {
+      fontSize: 13, fontFamily: 'Roboto_400Regular',
+      color: colors.grey, marginBottom: 4,
+    },
+    balance: {
+      fontSize: 42, fontFamily: 'Roboto_700Bold',
+      color: colors.textDark, letterSpacing: -1,
+    },
+    balanceSub: {
+      fontSize: 13, fontFamily: 'Roboto_400Regular',
+      color: colors.grey, marginTop: 2,
+    },
+    heroCard: {
+      backgroundColor: colors.tint, borderRadius: 16, padding: 16,
+      marginHorizontal: 12, marginTop: 20,
+      shadowColor: colors.deep, shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.07, shadowRadius: 4, elevation: 2,
+    },
+    heroLabel: {
+      fontSize: 12, fontFamily: 'Roboto_400Regular',
+      color: colors.grey, marginBottom: 4,
+    },
+    heroAmount: {
+      fontSize: 22, fontFamily: 'Roboto_700Bold',
+      color: colors.green, marginBottom: 12,
+    },
+    progressBg: {
+      backgroundColor: colors.softGreen, borderRadius: 4,
+      height: 4, marginBottom: 8,
+    },
+    progressFill: {
+      backgroundColor: colors.green, borderRadius: 4, height: 4,
+    },
+    progressRow: {
+      flexDirection: 'row', justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    progressLabel: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular', color: colors.grey,
+    },
+    chip: {
+      backgroundColor: colors.softGreen, borderRadius: 20,
+      paddingHorizontal: 10, paddingVertical: 3,
+    },
+    chipText: {
+      fontSize: 11, fontFamily: 'Roboto_500Medium', color: colors.green,
+    },
+    section: { paddingHorizontal: 20, marginTop: 28 },
+    sectionRow: {
+      flexDirection: 'row', justifyContent: 'space-between',
+      alignItems: 'center', marginBottom: 14,
+    },
+    sectionTitle: {
+      fontSize: 15, fontFamily: 'Roboto_700Bold',
+      color: colors.textDark, marginBottom: 14,
+    },
+    seeAll: {
+      fontSize: 12, fontFamily: 'Roboto_500Medium', color: colors.deep,
+    },
+    txnCard: {
+      backgroundColor: colors.card,
+      borderRadius: 16,
+      paddingHorizontal: 10,
+      shadowColor: colors.deep,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 2,
+    },
+    categoryRow: {
+      flexDirection: 'row', justifyContent: 'space-between',
+    },
+    categoryItem: { alignItems: 'center', gap: 5 },
+    categoryLabel: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular', color: colors.grey,
+    },
+    categorySpent: {
+      fontSize: 11, fontFamily: 'Roboto_500Medium', color: colors.textDark,
+    },
+    txnRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 13, borderBottomWidth: 0.5,
+      borderBottomColor: colors.hairline,
+    },
+    txnInfo: { flex: 1 },
+    txnName: {
+      fontSize: 13, fontFamily: 'Roboto_500Medium', color: colors.textDark,
+    },
+    txnDate: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular',
+      color: colors.grey, marginTop: 2,
+    },
+    txnAmount: {
+      fontSize: 13, fontFamily: 'Roboto_500Medium', color: colors.textDark,
+    },
+    emptyText: {
+      fontSize: 13, fontFamily: 'Roboto_400Regular',
+      color: colors.muted, textAlign: 'center',
+      paddingVertical: 24, lineHeight: 20,
+    },
+  });
+}

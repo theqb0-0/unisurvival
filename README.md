@@ -1,56 +1,56 @@
-# Welcome to your Expo app 👋
+# UniSurvival
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+**Make it last.**
 
-## Get started
+A mobile app that helps South African university students stretch
+and survive with basics with a monthly allowance. Built solo as an Android-first project.
 
-1. Install dependencies
+## The problem
 
-   ```bash
-   npm install
-   ```
+[59% of students run out of money before month end. Add your survey
+size and one line on what you found.]
 
-2. Start the app
+## What it does
 
-   ```bash
-   npx expo start
-   ```
+- Log expenses with a custom numpad and categories
+- Daily budget calculated from allowance, spending and days left
+- Track who owes you and who you owe
+- Plan meals and manage a food budget
+- Email one-time-code sign in (no passwords)
 
-In the output, you'll find options to open the app in a
+## Screenshots
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+![Home](docs/screenshots/home.png)
+![Log](docs/screenshots/log.png)
+![Debts](docs/screenshots/debts.png)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Tech stack
 
-## Get a fresh project
+- React Native with Expo and Expo Router
+- TypeScript
+- Supabase (PostgreSQL, Auth, row-level security)
+- Resend for email delivery
 
-When you're ready, run:
+## How it's built
 
-```bash
-npm run reset-project
-```
+- 8 database tables, each protected by row-level security so users
+  only ever see their own rows
+- Session gate that routes returning users straight to the app
+- Light and dark theme through a shared theme context
+- Dev mode with mock data when no user is signed in
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Run it locally
 
-### Other setup steps
+1. Clone the repo and run `npm install`
+2. Create your own Supabase project
+3. Copy `.env.example` to `.env` and add your own keys
+4. Run `npx expo start` and open it in Expo Go
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## Status
 
-## Learn more
+In development. Next up: AI spending insights, PayFast
+subscriptions, beta testing, Play Store launch.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Author
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Kuhle Njongo, BCom Information Systems & Finance, Wits

@@ -1,14 +1,23 @@
-import {
-  View, Text, StyleSheet, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator
-} from 'react-native';
 import { useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { ThemeColors } from '../../theme/colors';
+import { useTheme } from '../../theme/ThemeContext';
 
 export default function SignupScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,7 +68,7 @@ export default function SignupScreen() {
           <TextInput
             style={styles.input}
             placeholder="Sipho"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
@@ -71,7 +80,7 @@ export default function SignupScreen() {
           <TextInput
             style={[styles.input, { flex: 1 }]}
             placeholder="sipho@university.ac.za"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
@@ -85,7 +94,7 @@ export default function SignupScreen() {
           disabled={loading}
         >
           {loading
-            ? <ActivityIndicator color="#FFFFFF" />
+            ? <ActivityIndicator color={colors.onAccent} />
             : <Text style={styles.ctaBtnText}>Continue</Text>
           }
         </TouchableOpacity>
@@ -108,66 +117,68 @@ export default function SignupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  greenHeader: {
-    backgroundColor: '#16A34A',
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 28,
-    gap: 6,
-  },
-  step: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular',
-    color: 'rgba(255,255,255,0.6)', letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
-  title: {
-    fontSize: 24, fontFamily: 'Roboto_700Bold',
-    color: '#FFFFFF', letterSpacing: -0.3,
-  },
-  sub: {
-    fontSize: 13, fontFamily: 'Roboto_400Regular',
-    color: 'rgba(255,255,255,0.7)',
-  },
-  body: { flex: 1, paddingHorizontal: 24, paddingTop: 28, gap: 6 },
-  label: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280', marginBottom: 4, marginTop: 12,
-  },
-  inputRow: {
-    flexDirection: 'row', alignItems: 'center',
-    borderBottomWidth: 1.5, borderBottomColor: '#DCFCE7',
-    paddingBottom: 10, gap: 6,
-  },
-  input: {
-    fontSize: 15, fontFamily: 'Roboto_400Regular', color: '#333333',
-  },
-  ctaBtn: {
-    backgroundColor: '#16A34A', borderRadius: 14,
-    paddingVertical: 16, alignItems: 'center', marginTop: 28,
-  },
-  ctaBtnText: {
-    fontSize: 15, fontFamily: 'Roboto_700Bold', color: '#FFFFFF',
-  },
-  orRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 12, marginTop: 20,
-  },
-  orLine: { flex: 1, height: 0.5, backgroundColor: '#F3F4F6' },
-  orText: {
-    fontSize: 12, fontFamily: 'Roboto_400Regular', color: '#9CA3AF',
-  },
-  googleBtn: {
-    borderWidth: 0.5, borderColor: '#E5E7EB', borderRadius: 14,
-    paddingVertical: 14, alignItems: 'center', marginTop: 8,
-  },
-  googleBtnText: {
-    fontSize: 14, fontFamily: 'Roboto_500Medium', color: '#333333',
-  },
-  terms: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular',
-    color: '#9CA3AF', textAlign: 'center',
-    marginTop: 20, lineHeight: 16,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.canvas },
+    greenHeader: {
+      backgroundColor: colors.green,
+      paddingHorizontal: 24,
+      paddingTop: 20,
+      paddingBottom: 28,
+      gap: 6,
+    },
+    step: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular',
+      color: colors.onAccentMuted, letterSpacing: 0.8,
+      textTransform: 'uppercase',
+    },
+    title: {
+      fontSize: 24, fontFamily: 'Roboto_700Bold',
+      color: colors.onAccent, letterSpacing: -0.3,
+    },
+    sub: {
+      fontSize: 13, fontFamily: 'Roboto_400Regular',
+      color: colors.onAccentMuted,
+    },
+    body: { flex: 1, paddingHorizontal: 24, paddingTop: 28, gap: 6 },
+    label: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular',
+      color: colors.grey, marginBottom: 4, marginTop: 12,
+    },
+    inputRow: {
+      flexDirection: 'row', alignItems: 'center',
+      borderBottomWidth: 1.5, borderBottomColor: colors.softGreen,
+      paddingBottom: 10, gap: 6,
+    },
+    input: {
+      fontSize: 15, fontFamily: 'Roboto_400Regular', color: colors.textDark,
+    },
+    ctaBtn: {
+      backgroundColor: colors.green, borderRadius: 14,
+      paddingVertical: 16, alignItems: 'center', marginTop: 28,
+    },
+    ctaBtnText: {
+      fontSize: 15, fontFamily: 'Roboto_700Bold', color: colors.onAccent,
+    },
+    orRow: {
+      flexDirection: 'row', alignItems: 'center',
+      gap: 12, marginTop: 20,
+    },
+    orLine: { flex: 1, height: 0.5, backgroundColor: colors.hairline },
+    orText: {
+      fontSize: 12, fontFamily: 'Roboto_400Regular', color: colors.muted,
+    },
+    googleBtn: {
+      borderWidth: 0.5, borderColor: colors.border, borderRadius: 14,
+      paddingVertical: 14, alignItems: 'center', marginTop: 8,
+    },
+    googleBtnText: {
+      fontSize: 14, fontFamily: 'Roboto_500Medium', color: colors.textDark,
+    },
+    terms: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular',
+      color: colors.muted, textAlign: 'center',
+      marginTop: 20, lineHeight: 16,
+    },
+  });
+}

@@ -1,16 +1,19 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator, Alert,
+  ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
+import { ThemeColors } from '../../theme/colors';
+import { useTheme } from '../../theme/ThemeContext';
 
 const mockMeals = [
   { id: '1', slot: 'Breakfast', meal_name: 'Oats with banana' },
@@ -30,6 +33,8 @@ const mockPantry = [
 ];
 
 export default function GroceryScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [meals, setMeals] = useState<any[]>([]);
   const [shopping, setShopping] = useState<any[]>([]);
   const [pantryAlerts, setPantryAlerts] = useState<any[]>([]);
@@ -117,7 +122,7 @@ export default function GroceryScreen() {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <ActivityIndicator style={{ flex: 1 }} color="#16A34A" />
+        <ActivityIndicator style={{ flex: 1 }} color={colors.green} />
       </SafeAreaView>
     );
   }
@@ -132,7 +137,7 @@ export default function GroceryScreen() {
             'Receipt scanning coming in the next update.'
           )}
         >
-          <Ionicons name="camera-outline" size={22} color="#16A34A" />
+          <Ionicons name="camera-outline" size={22} color={colors.green} />
         </TouchableOpacity>
       </View>
 
@@ -179,15 +184,15 @@ export default function GroceryScreen() {
         </View>
 
         <View style={styles.cardsRow}>
-          <TouchableOpacity style={styles.accessCard}>
-            <Ionicons name="list-outline" size={24} color="#16A34A" />
+          <TouchableOpacity style={styles.accessCard} activeOpacity={0.8}>
+            <Ionicons name="list-outline" size={24} color={colors.green} />
             <Text style={styles.accessCardTitle}>Shopping List</Text>
             <Text style={styles.accessCardSub}>
               {shopping.length} items · Est. R{shoppingTotal.toFixed(0)}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.accessCard}>
-            <Ionicons name="cube-outline" size={24} color="#16A34A" />
+          <TouchableOpacity style={styles.accessCard} activeOpacity={0.8}>
+            <Ionicons name="cube-outline" size={24} color={colors.green} />
             <Text style={styles.accessCardTitle}>Pantry</Text>
             <Text style={styles.accessCardSub}>
               {pantryAlerts.length > 0
@@ -215,7 +220,7 @@ export default function GroceryScreen() {
                   <Ionicons
                     name="checkmark-circle-outline"
                     size={20}
-                    color="#16A34A"
+                    color={colors.green}
                   />
                 </TouchableOpacity>
                 <Text style={styles.shopName}>{item.name}</Text>
@@ -234,14 +239,14 @@ export default function GroceryScreen() {
             'Receipt scanning coming in the next update.'
           )}
         >
-          <Ionicons name="camera-outline" size={24} color="#DCFCE7" />
+          <Ionicons name="camera-outline" size={24} color={colors.onDeep} />
           <View style={styles.scanText}>
             <Text style={styles.scanTitle}>Scan a receipt</Text>
             <Text style={styles.scanSub}>
               Updates your pantry and budget automatically
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={16} color="#DCFCE7" />
+          <Ionicons name="chevron-forward" size={16} color={colors.onDeep} />
         </TouchableOpacity>
 
       </ScrollView>
@@ -249,95 +254,114 @@ export default function GroceryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', paddingHorizontal: 20,
-    paddingTop: 16, paddingBottom: 4,
-  },
-  headerTitle: {
-    fontSize: 22, fontFamily: 'Roboto_700Bold', color: '#333333',
-  },
-  budgetArea: {
-    paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4,
-  },
-  budgetAmount: {
-    fontSize: 42, fontFamily: 'Roboto_700Bold',
-    color: '#333333', letterSpacing: -1,
-  },
-  budgetSub: {
-    fontSize: 13, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280', marginTop: 2,
-  },
-  section: { paddingHorizontal: 20, marginTop: 28 },
-  sectionRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', marginBottom: 14,
-  },
-  sectionTitle: {
-    fontSize: 15, fontFamily: 'Roboto_700Bold', color: '#333333',
-  },
-  sectionMore: {
-    fontSize: 12, fontFamily: 'Roboto_400Regular', color: '#16A34A',
-  },
-  mealRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 13, borderBottomWidth: 0.5,
-    borderBottomColor: '#F3F4F6',
-  },
-  mealSlot: {
-    width: 64, fontSize: 12, fontFamily: 'Roboto_400Regular',
-    color: '#6B7280',
-  },
-  mealName: {
-    flex: 1, fontSize: 13, fontFamily: 'Roboto_500Medium', color: '#333333',
-  },
-  mealLink: {
-    fontSize: 12, fontFamily: 'Roboto_400Regular', color: '#16A34A',
-  },
-  cardsRow: {
-    flexDirection: 'row', gap: 12,
-    paddingHorizontal: 20, marginTop: 28,
-  },
-  accessCard: {
-    flex: 1, borderWidth: 0.5, borderColor: '#DCFCE7',
-    borderRadius: 14, padding: 14, gap: 6,
-    shadowColor: '#041202', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
-  },
-  accessCardTitle: {
-    fontSize: 13, fontFamily: 'Roboto_700Bold', color: '#333333',
-  },
-  accessCardSub: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular', color: '#6B7280',
-  },
-  shopRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12, borderBottomWidth: 0.5,
-    borderBottomColor: '#F3F4F6',
-  },
-  shopName: {
-    flex: 1, fontSize: 13, fontFamily: 'Roboto_500Medium', color: '#333333',
-  },
-  shopPrice: {
-    fontSize: 12, fontFamily: 'Roboto_400Regular', color: '#6B7280',
-  },
-  scanCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: '#041202', borderRadius: 14, padding: 16,
-    marginHorizontal: 20, marginTop: 20, marginBottom: 32,
-  },
-  scanText: { flex: 1 },
-  scanTitle: {
-    fontSize: 13, fontFamily: 'Roboto_700Bold', color: '#DCFCE7',
-  },
-  scanSub: {
-    fontSize: 11, fontFamily: 'Roboto_400Regular',
-    color: 'rgba(220,252,231,0.6)', marginTop: 2,
-  },
-  emptyText: {
-    fontSize: 13, fontFamily: 'Roboto_400Regular',
-    color: '#9CA3AF', paddingVertical: 16, lineHeight: 20,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.canvas },
+    header: {
+      flexDirection: 'row', justifyContent: 'space-between',
+      alignItems: 'center', paddingHorizontal: 20,
+      paddingTop: 16, paddingBottom: 4,
+    },
+    headerTitle: {
+      fontSize: 22, fontFamily: 'Roboto_700Bold', color: colors.textDark,
+    },
+    budgetArea: {
+      paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4,
+    },
+    budgetAmount: {
+      fontSize: 42, fontFamily: 'Roboto_700Bold',
+      color: colors.textDark, letterSpacing: -1,
+    },
+    budgetSub: {
+      fontSize: 13, fontFamily: 'Roboto_400Regular',
+      color: colors.grey, marginTop: 2,
+    },
+    section: { paddingHorizontal: 20, marginTop: 28 },
+    sectionRow: {
+      flexDirection: 'row', justifyContent: 'space-between',
+      alignItems: 'center', marginBottom: 14,
+    },
+    sectionTitle: {
+      fontSize: 15, fontFamily: 'Roboto_700Bold', color: colors.textDark,
+    },
+    sectionMore: {
+      fontSize: 12, fontFamily: 'Roboto_400Regular', color: colors.green,
+    },
+    mealRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 13, borderBottomWidth: 0.5,
+      borderBottomColor: colors.hairline,
+    },
+    mealSlot: {
+      width: 64, fontSize: 12, fontFamily: 'Roboto_400Regular',
+      color: colors.grey,
+    },
+    mealName: {
+      flex: 1, fontSize: 13, fontFamily: 'Roboto_500Medium', color: colors.textDark,
+    },
+    mealLink: {
+      fontSize: 12, fontFamily: 'Roboto_400Regular', color: colors.green,
+    },
+    cardsRow: {
+      flexDirection: 'row',
+      alignItems: 'stretch',
+      gap: 12,
+      paddingHorizontal: 20,
+      marginTop: 28,
+    },
+    accessCard: {
+      flex: 1,
+      minWidth: 0,
+      backgroundColor: colors.card,
+      borderWidth: 1,
+      borderColor: colors.softGreen,
+      borderRadius: 14,
+      paddingVertical: 16,
+      paddingHorizontal: 12,
+      gap: 6,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    accessCardTitle: {
+      fontSize: 13,
+      fontFamily: 'Roboto_700Bold',
+      color: colors.textDark,
+      textAlign: 'center',
+    },
+    accessCardSub: {
+      fontSize: 11,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.grey,
+      textAlign: 'center',
+      lineHeight: 16,
+    },
+    shopRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 12, borderBottomWidth: 0.5,
+      borderBottomColor: colors.hairline,
+    },
+    shopName: {
+      flex: 1, fontSize: 13, fontFamily: 'Roboto_500Medium', color: colors.textDark,
+    },
+    shopPrice: {
+      fontSize: 12, fontFamily: 'Roboto_400Regular', color: colors.grey,
+    },
+    scanCard: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: colors.deep, borderRadius: 14, padding: 16,
+      marginHorizontal: 20, marginTop: 20, marginBottom: 32,
+    },
+    scanText: { flex: 1 },
+    scanTitle: {
+      fontSize: 13, fontFamily: 'Roboto_700Bold', color: colors.onDeep,
+    },
+    scanSub: {
+      fontSize: 11, fontFamily: 'Roboto_400Regular',
+      color: colors.onDeepMuted, marginTop: 2,
+    },
+    emptyText: {
+      fontSize: 13, fontFamily: 'Roboto_400Regular',
+      color: colors.muted, paddingVertical: 16, lineHeight: 20,
+    },
+  });
+}

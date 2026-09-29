@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { useTheme } from '../theme/ThemeContext';
 
 export default function Index() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   useEffect(() => {
     checkSession();
@@ -20,9 +22,13 @@ export default function Index() {
   };
 
   return (
-    <View style={{ flex: 1, alignItems: 'center',
-      justifyContent: 'center', backgroundColor: '#041202' }}>
-      <ActivityIndicator color="#16A34A" size="large" />
+    <View style={{
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.deep,
+    }}>
+      <ActivityIndicator color={colors.green} size="large" />
     </View>
   );
 }
