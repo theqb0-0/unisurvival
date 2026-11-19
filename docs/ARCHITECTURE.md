@@ -32,9 +32,11 @@ src/
     onboarding/
       splash.tsx  problem.tsx  signup.tsx  signin.tsx  verify.tsx  setup.tsx
   components/
+    otp-input.tsx          OTP: hidden TextInput + 6 boxes
     snackbar.tsx           Micro-toast (Profile, Grocery, tasks/calendar; not app-wide yet)
   lib/
     supabase.ts            Supabase client (AsyncStorage session persistence)
+    auth-helpers.ts        Email validation, auth error mapping, profileNeedsSetup
     dev.ts                 DEV_MOCK flag (EXPO_PUBLIC_DEV_MOCK)
     money-tasks.ts         Types, mocks, formatDueLabel
   theme/
@@ -90,6 +92,7 @@ New: Splash -> Problem -> Signup (name + email, OTP) -> Verify -> Setup only if 
 - Session gate + optional `DEV_MOCK` instead of always-on mock data
 - Snackbar component on several screens (partial adoption)
 - Dedicated sign-in screen (`/onboarding/signin`), OTP UX rebuilt, verify routes by profile setup state
+- Expo starter template UI removed (`app-tabs`, `themed-*`, `animated-icon`, `constants/theme`, old `hooks/use-theme`); `npx tsc --noEmit` clean
 - SQL migration file for `money_tasks` in repo
 - `docs/auth-resume.md` for resuming OTP tests
 
@@ -98,8 +101,6 @@ New: Splash -> Problem -> Signup (name + email, OTP) -> Verify -> Setup only if 
 - **Supabase:** Apply `money_tasks` and `shopping_pantry_rls` migrations on the live project if not already run
 - **Dead ends / stubs:** Receipt scan (toast only), Notifications and Categories rows labeled "Soon" (no push system yet)
 - **setup.tsx:** signed-out path redirects to signin; budget duplicate insert on returning setup not yet upserted
-- **package.json:** `@react-navigation/elements` listed but not imported in `src`
-- **Template leftovers:** `src/constants/theme.ts`, `themed-text.tsx`, `animated-icon.tsx` (+ css) from Expo starter, largely unused by app screens
 - **Snackbar:** Replace remaining `Alert.alert` usage app-wide (Log, setup, verify, debts modals, etc.)
 - **Brand assets:** Referenced in `app.json` under `assets/images/` (icon, splash, adaptive icons); confirm files exist locally and in CI/EAS context
 
