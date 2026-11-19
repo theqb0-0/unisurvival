@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
 import { darkColors, lightColors, ThemeColors } from './colors';
 
 type Mode = 'light' | 'dark';
@@ -16,12 +15,13 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const systemScheme = useColorScheme();
-  const [mode, setMode] = useState<Mode>(systemScheme === 'dark' ? 'dark' : 'light');
+  const [mode, setMode] = useState<Mode>('light');
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((saved) => {
       if (saved === 'light' || saved === 'dark') setMode(saved);
+      setReady(true);
     });
   }, []);
 
@@ -34,6 +34,8 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   };
 
   const colors = mode === 'dark' ? darkColors : lightColors;
+
+  if (!ready) return null;
 
   return (
     <ThemeContext.Provider value={{ mode, colors, toggleTheme }}>

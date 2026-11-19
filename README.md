@@ -22,7 +22,7 @@ size and one line on what you found.]
 
 ![Home](docs/screenshots/home.png)
 ![Log](docs/screenshots/log.png)
-![Debts](docs/screenshots/debts.png)
+![Debts](docs/screenshots/grocery.png)
 
 ## Tech stack
 

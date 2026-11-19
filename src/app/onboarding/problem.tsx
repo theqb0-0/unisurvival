@@ -34,7 +34,7 @@ export default function ProblemScreen() {
         style={styles.ctaBtn}
         onPress={() => router.push('/onboarding/signup')}
       >
-        <Text style={styles.ctaBtnText}>That's me. Let's fix it.</Text>
+        <Text style={styles.ctaBtnText}>Make it last. I am in.</Text>
       </TouchableOpacity>
 
     </SafeAreaView>

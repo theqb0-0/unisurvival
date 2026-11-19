@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Snackbar } from '../../components/snackbar';
+import { DEV_MOCK } from '../../lib/dev';
 import { supabase } from '../../lib/supabase';
 import { ThemeColors } from '../../theme/colors';
 import { useTheme } from '../../theme/ThemeContext';
@@ -35,10 +36,11 @@ export default function LogScreen() {
   const [selectedCategory, setSelectedCategory] = useState('Food');
   const [note, setNote] = useState('');
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
 
   const handleLog = async () => {
     if (amount === '0' || amount === '') {
-      Alert.alert('Quick check', 'Enter an amount first.');
+      setToast('Enter an amount first.');
       return;
     }
 
@@ -47,7 +49,12 @@ export default function LogScreen() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      Alert.alert('Logged', `R${amount} in ${selectedCategory} saved.`);
+      if (!DEV_MOCK) {
+        setLoading(false);
+        setToast('Sign in to save expenses.');
+        return;
+      }
+      setToast(`R${amount} in ${selectedCategory} saved.`);
       setAmount('0');
       setSelectedCategory('Food');
       setNote('');
@@ -68,15 +75,15 @@ export default function LogScreen() {
 
     if (error) {
       setLoading(false);
-      Alert.alert('Something went wrong', error.message);
+      setToast(error.message);
       return;
     }
 
     setLoading(false);
+    setToast(`R${amount} in ${selectedCategory} logged.`);
     setAmount('0');
     setSelectedCategory('Food');
     setNote('');
-    Alert.alert('Done', `R${amount} in ${selectedCategory} logged.`);
   };
 
   const handleNumber = (val: string) => {
@@ -107,7 +114,11 @@ export default function LogScreen() {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingBottom: 16 }}
+      >
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Category</Text>
           <View style={styles.categoryGrid}>
@@ -134,16 +145,18 @@ export default function LogScreen() {
           <View style={styles.detailRow}>
             <Ionicons name="calendar-outline" size={16} color={colors.green} />
             <Text style={styles.detailLabel}>Date</Text>
-            <Text style={styles.detailValue}>Today, 25 Jul</Text>
+            <Text style={styles.detailValue}>Today</Text>
           </View>
-          <View style={[styles.detailRow, { borderBottomWidth: 0 }]}>
+          <View style={[styles.detailRow, styles.noteRow]}>
             <Ionicons name="pencil-outline" size={16} color={colors.green} />
             <TextInput
-              style={[styles.detailLabel, { flex: 1 }]}
+              style={styles.noteInput}
               placeholder="Note (optional)"
               placeholderTextColor={colors.muted}
               value={note}
               onChangeText={setNote}
+              editable
+              returnKeyType="done"
             />
           </View>
         </View>
@@ -174,6 +187,7 @@ export default function LogScreen() {
         </TouchableOpacity>
       </View>
 
+      <Snackbar message={toast} onDismiss={() => setToast(null)} />
     </SafeAreaView>
   );
 }
@@ -181,46 +195,124 @@ export default function LogScreen() {
 function createStyles(colors: ThemeColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.canvas },
-    header: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
+    header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     headerTitle: { fontSize: 22, fontFamily: 'Roboto_700Bold', color: colors.textDark },
     amountArea: {
-      alignItems: 'center', paddingVertical: 24,
-      borderBottomWidth: 0.5, borderBottomColor: colors.hairline,
+      alignItems: 'center',
+      paddingVertical: 24,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.hairline,
     },
-    amountLabel: { fontSize: 12, fontFamily: 'Roboto_400Regular', color: colors.grey, marginBottom: 8 },
+    amountLabel: {
+      fontSize: 12,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.grey,
+      marginBottom: 8,
+    },
     amountRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
-    amountPrefix: { fontSize: 20, fontFamily: 'Roboto_300Light', color: colors.grey, marginTop: 8 },
-    amountValue: { fontSize: 52, fontFamily: 'Roboto_700Bold', color: colors.textDark, letterSpacing: -2 },
-    section: { paddingHorizontal: 20, marginTop: 24 },
-    sectionTitle: { fontSize: 15, fontFamily: 'Roboto_700Bold', color: colors.textDark, marginBottom: 14 },
+    amountPrefix: {
+      fontSize: 20,
+      fontFamily: 'Roboto_300Light',
+      color: colors.grey,
+      marginTop: 8,
+    },
+    amountValue: {
+      fontSize: 48,
+      fontFamily: 'Roboto_700Bold',
+      color: colors.textDark,
+      letterSpacing: -2,
+    },
+    section: { paddingHorizontal: 16, marginTop: 24 },
+    sectionTitle: {
+      fontSize: 15,
+      fontFamily: 'Roboto_700Bold',
+      color: colors.textDark,
+      marginBottom: 16,
+    },
     categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     categoryBtn: {
-      width: '22%', alignItems: 'center', gap: 4,
-      paddingVertical: 10, borderRadius: 10,
+      width: '22%',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 10,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: 'transparent',
     },
-    categoryBtnActive: { backgroundColor: colors.tint },
-    categoryLabel: { fontSize: 10, fontFamily: 'Roboto_400Regular', color: colors.muted },
-    categoryLabelActive: { color: colors.green, fontFamily: 'Roboto_500Medium' },
+    categoryBtnActive: {
+      backgroundColor: colors.card,
+      borderColor: colors.border,
+    },
+    categoryLabel: {
+      fontSize: 10,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.muted,
+    },
+    categoryLabelActive: {
+      color: colors.green,
+      fontFamily: 'Roboto_500Medium',
+    },
     detailRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingVertical: 14, borderBottomWidth: 0.5, borderBottomColor: colors.hairline,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.hairline,
     },
-    detailLabel: { flex: 1, fontSize: 13, fontFamily: 'Roboto_400Regular', color: colors.textDark },
-    detailValue: { fontSize: 13, fontFamily: 'Roboto_400Regular', color: colors.grey },
+    noteRow: { borderBottomWidth: 0, minHeight: 52 },
+    detailLabel: {
+      flex: 1,
+      fontSize: 13,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.textDark,
+    },
+    detailValue: {
+      fontSize: 13,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.grey,
+    },
+    noteInput: {
+      flex: 1,
+      fontSize: 13,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.textDark,
+      paddingVertical: 8,
+      minHeight: 40,
+    },
     numpad: {
-      flexDirection: 'row', flexWrap: 'wrap',
-      paddingHorizontal: 20, gap: 4, marginTop: 8,
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      paddingHorizontal: 16,
+      gap: 8,
+      marginTop: 8,
     },
     numpadBtn: {
-      width: '31%', paddingVertical: 14, alignItems: 'center',
-      borderRadius: 10, backgroundColor: colors.input,
+      width: '31%',
+      paddingVertical: 14,
+      alignItems: 'center',
+      borderRadius: 12,
+      backgroundColor: colors.input,
+      borderWidth: 1,
+      borderColor: colors.border,
     },
-    numpadText: { fontSize: 20, fontFamily: 'Roboto_500Medium', color: colors.textDark },
-    ctaWrap: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
+    numpadText: {
+      fontSize: 20,
+      fontFamily: 'Roboto_500Medium',
+      color: colors.textDark,
+    },
+    ctaWrap: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     logBtn: {
-      backgroundColor: colors.deep, borderRadius: 14,
-      paddingVertical: 16, alignItems: 'center',
+      backgroundColor: colors.green,
+      borderRadius: 14,
+      paddingVertical: 16,
+      alignItems: 'center',
     },
-    logBtnText: { fontSize: 15, fontFamily: 'Roboto_700Bold', color: colors.onAccent, letterSpacing: 0.5 },
+    logBtnText: {
+      fontSize: 15,
+      fontFamily: 'Roboto_700Bold',
+      color: colors.onAccent,
+      letterSpacing: 0.5,
+    },
   });
 }

@@ -1,9 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Snackbar } from '../../components/snackbar';
+import { DEV_MOCK } from '../../lib/dev';
 import { supabase } from '../../lib/supabase';
 import { ThemeColors } from '../../theme/colors';
 import { useTheme } from '../../theme/ThemeContext';
@@ -33,6 +34,7 @@ const mockPantry = [
 ];
 
 export default function GroceryScreen() {
+  const router = useRouter();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [meals, setMeals] = useState<any[]>([]);
@@ -40,6 +42,7 @@ export default function GroceryScreen() {
   const [pantryAlerts, setPantryAlerts] = useState<any[]>([]);
   const [foodBudget, setFoodBudget] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -47,6 +50,11 @@ export default function GroceryScreen() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
+      if (!DEV_MOCK) {
+        setLoading(false);
+        router.replace('/onboarding/splash');
+        return;
+      }
       setMeals(mockMeals);
       setShopping(mockShopping);
       setPantryAlerts(mockPantry);
@@ -132,10 +140,7 @@ export default function GroceryScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Grocery</Text>
         <TouchableOpacity
-          onPress={() => Alert.alert(
-            'Scan receipt',
-            'Receipt scanning coming in the next update.'
-          )}
+          onPress={() => setToast('Receipt scan is parked for a later update.')}
         >
           <Ionicons name="camera-outline" size={22} color={colors.green} />
         </TouchableOpacity>
@@ -184,14 +189,22 @@ export default function GroceryScreen() {
         </View>
 
         <View style={styles.cardsRow}>
-          <TouchableOpacity style={styles.accessCard} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.accessCard}
+            activeOpacity={0.8}
+            onPress={() => router.push('/grocery/shopping')}
+          >
             <Ionicons name="list-outline" size={24} color={colors.green} />
             <Text style={styles.accessCardTitle}>Shopping List</Text>
             <Text style={styles.accessCardSub}>
               {shopping.length} items · Est. R{shoppingTotal.toFixed(0)}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.accessCard} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={styles.accessCard}
+            activeOpacity={0.8}
+            onPress={() => router.push('/grocery/pantry')}
+          >
             <Ionicons name="cube-outline" size={24} color={colors.green} />
             <Text style={styles.accessCardTitle}>Pantry</Text>
             <Text style={styles.accessCardSub}>
@@ -234,22 +247,20 @@ export default function GroceryScreen() {
 
         <TouchableOpacity
           style={styles.scanCard}
-          onPress={() => Alert.alert(
-            'Scan receipt',
-            'Receipt scanning coming in the next update.'
-          )}
+          onPress={() => setToast('Receipt scan is parked until camera OCR is ready.')}
         >
           <Ionicons name="camera-outline" size={24} color={colors.onDeep} />
           <View style={styles.scanText}>
             <Text style={styles.scanTitle}>Scan a receipt</Text>
             <Text style={styles.scanSub}>
-              Updates your pantry and budget automatically
+              Coming later. Updates pantry and budget when live.
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={16} color={colors.onDeep} />
         </TouchableOpacity>
 
       </ScrollView>
+      <Snackbar message={toast} onDismiss={() => setToast(null)} />
     </SafeAreaView>
   );
 }
@@ -259,27 +270,27 @@ function createStyles(colors: ThemeColors) {
     container: { flex: 1, backgroundColor: colors.canvas },
     header: {
       flexDirection: 'row', justifyContent: 'space-between',
-      alignItems: 'center', paddingHorizontal: 20,
-      paddingTop: 16, paddingBottom: 4,
+      alignItems: 'center', paddingHorizontal: 16,
+      paddingTop: 16, paddingBottom: 8,
     },
     headerTitle: {
       fontSize: 22, fontFamily: 'Roboto_700Bold', color: colors.textDark,
     },
     budgetArea: {
-      paddingHorizontal: 20, paddingTop: 20, paddingBottom: 4,
+      paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8,
     },
     budgetAmount: {
-      fontSize: 42, fontFamily: 'Roboto_700Bold',
+      fontSize: 40, fontFamily: 'Roboto_700Bold',
       color: colors.textDark, letterSpacing: -1,
     },
     budgetSub: {
       fontSize: 13, fontFamily: 'Roboto_400Regular',
-      color: colors.grey, marginTop: 2,
+      color: colors.grey, marginTop: 4,
     },
-    section: { paddingHorizontal: 20, marginTop: 28 },
+    section: { paddingHorizontal: 16, marginTop: 32 },
     sectionRow: {
       flexDirection: 'row', justifyContent: 'space-between',
-      alignItems: 'center', marginBottom: 14,
+      alignItems: 'center', marginBottom: 16,
     },
     sectionTitle: {
       fontSize: 15, fontFamily: 'Roboto_700Bold', color: colors.textDark,
@@ -289,7 +300,7 @@ function createStyles(colors: ThemeColors) {
     },
     mealRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingVertical: 13, borderBottomWidth: 0.5,
+      paddingVertical: 16, borderBottomWidth: 1,
       borderBottomColor: colors.hairline,
     },
     mealSlot: {
@@ -305,20 +316,20 @@ function createStyles(colors: ThemeColors) {
     cardsRow: {
       flexDirection: 'row',
       alignItems: 'stretch',
-      gap: 12,
-      paddingHorizontal: 20,
-      marginTop: 28,
+      gap: 16,
+      paddingHorizontal: 16,
+      marginTop: 32,
     },
     accessCard: {
       flex: 1,
       minWidth: 0,
       backgroundColor: colors.card,
       borderWidth: 1,
-      borderColor: colors.softGreen,
-      borderRadius: 14,
+      borderColor: colors.border,
+      borderRadius: 16,
       paddingVertical: 16,
       paddingHorizontal: 12,
-      gap: 6,
+      gap: 8,
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -337,7 +348,7 @@ function createStyles(colors: ThemeColors) {
     },
     shopRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingVertical: 12, borderBottomWidth: 0.5,
+      paddingVertical: 16, borderBottomWidth: 1,
       borderBottomColor: colors.hairline,
     },
     shopName: {
@@ -348,8 +359,9 @@ function createStyles(colors: ThemeColors) {
     },
     scanCard: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: colors.deep, borderRadius: 14, padding: 16,
-      marginHorizontal: 20, marginTop: 20, marginBottom: 32,
+      backgroundColor: colors.deep, borderRadius: 16, padding: 16,
+      marginHorizontal: 16, marginTop: 24, marginBottom: 32,
+      borderWidth: 1, borderColor: colors.border,
     },
     scanText: { flex: 1 },
     scanTitle: {
@@ -357,7 +369,7 @@ function createStyles(colors: ThemeColors) {
     },
     scanSub: {
       fontSize: 11, fontFamily: 'Roboto_400Regular',
-      color: colors.onDeepMuted, marginTop: 2,
+      color: colors.onDeepMuted, marginTop: 4,
     },
     emptyText: {
       fontSize: 13, fontFamily: 'Roboto_400Regular',

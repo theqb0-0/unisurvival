@@ -64,7 +64,7 @@ export default function SetupScreen() {
     }
 
     const now = new Date();
-    await supabase
+    const { error: budgetError } = await supabase
       .from('budgets')
       .insert({
         user_id: user.id,
@@ -75,6 +75,12 @@ export default function SetupScreen() {
       });
 
     setLoading(false);
+
+    if (budgetError) {
+      Alert.alert('Budget not created', budgetError.message);
+      return;
+    }
+
     router.replace('/(tabs)');
   };
 

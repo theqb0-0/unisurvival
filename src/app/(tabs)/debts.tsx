@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { DEV_MOCK } from '../../lib/dev';
 import { supabase } from '../../lib/supabase';
 import { ThemeColors } from '../../theme/colors';
 import { useTheme } from '../../theme/ThemeContext';
@@ -64,7 +65,7 @@ export default function DebtsScreen() {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      setDebts(mockDebts);
+      setDebts(DEV_MOCK ? mockDebts : []);
       setLoading(false);
       return;
     }
@@ -231,7 +232,7 @@ export default function DebtsScreen() {
                   <Text style={styles.debtDetail}>{debt.detail}</Text>
                 </View>
                 <View style={styles.debtRight}>
-                  <Text style={[styles.debtAmount, { color: colors.danger }]}>
+                  <Text style={[styles.debtAmount, { color: colors.grey }]}>
                     R{debt.amount}
                   </Text>
                   <TouchableOpacity
@@ -389,25 +390,25 @@ function createStyles(colors: ThemeColors) {
     container: { flex: 1, backgroundColor: colors.canvas },
     header: {
       flexDirection: 'row', justifyContent: 'space-between',
-      alignItems: 'center', paddingHorizontal: 20,
-      paddingTop: 16, paddingBottom: 4,
+      alignItems: 'center', paddingHorizontal: 16,
+      paddingTop: 16, paddingBottom: 8,
     },
     headerTitle: {
       fontSize: 22, fontFamily: 'Roboto_700Bold', color: colors.textDark,
     },
     addBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
-      backgroundColor: colors.tint, borderRadius: 20,
-      paddingHorizontal: 12, paddingVertical: 6,
+      backgroundColor: colors.card, borderRadius: 16,
+      paddingHorizontal: 12, paddingVertical: 8,
+      borderWidth: 1, borderColor: colors.border,
     },
     addBtnText: {
       fontSize: 13, fontFamily: 'Roboto_500Medium', color: colors.green,
     },
     summaryCard: {
-      backgroundColor: colors.tint, borderRadius: 16, padding: 16,
-      marginHorizontal: 20, marginTop: 20,
-      shadowColor: colors.deep, shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.07, shadowRadius: 4, elevation: 2,
+      backgroundColor: colors.card, borderRadius: 16, padding: 16,
+      marginHorizontal: 16, marginTop: 16,
+      borderWidth: 1, borderColor: colors.border,
     },
     summaryRow: {
       flexDirection: 'row', justifyContent: 'space-between',
@@ -434,19 +435,20 @@ function createStyles(colors: ThemeColors) {
     summaryNetValue: {
       fontSize: 12, fontFamily: 'Roboto_500Medium', color: colors.textDark,
     },
-    section: { paddingHorizontal: 20, marginTop: 28 },
+    section: { paddingHorizontal: 16, marginTop: 32 },
     sectionTitle: {
       fontSize: 15, fontFamily: 'Roboto_700Bold',
-      color: colors.textDark, marginBottom: 14,
+      color: colors.textDark, marginBottom: 16,
     },
     debtRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingVertical: 12, borderBottomWidth: 0.5,
+      paddingVertical: 16, borderBottomWidth: 1,
       borderBottomColor: colors.hairline,
     },
     avatar: {
       width: 36, height: 36, borderRadius: 18,
-      backgroundColor: colors.tint,
+      backgroundColor: colors.card,
+      borderWidth: 1, borderColor: colors.border,
       alignItems: 'center', justifyContent: 'center',
     },
     avatarStore: { backgroundColor: colors.hairline },
