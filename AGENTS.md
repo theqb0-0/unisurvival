@@ -6,13 +6,13 @@ Student money and life app for South Africa. Expo SDK 58, React Native, TypeScri
 - Screens: `const { colors } = useTheme(); const styles = useMemo(() => createStyles(colors), [colors]);`. Never hardcode hex in screens. Add new tokens to src/theme/colors.ts for both light and dark.
 - Never import from `@react-navigation/*`. Use `expo-router` and `react-native`.
 - Always handle the Supabase `{ error }` and show it to the user. No silent failures.
-- Signed-out mock data (Sipho, R1,500) is intentional dev mode. Keep it.
+- Mock data (Sipho) shows only when EXPO_PUBLIC_DEV_MOCK=1. Without it, signed-out users go to splash. Never set that variable in EAS.
 - Money values are rand. Show as `R` plus a whole number unless cents matter.
 - No API keys in app code. AI calls go through Supabase Edge Functions. Never put a service_role key in the app.
 - Never commit `.env`.
 
 ## Design rules
-- Default theme is LIGHT. Dark "Obsidian" (canvas #041202, card #0A1C08) is available through the Profile toggle.
+- Default theme is LIGHT. Dark mode is toggled in Profile. Colors live only in src/theme/colors.ts, so never copy hex values into docs or screens.
 - Cards use a 1px low-opacity border, no shadows. Radius 12 or 16. 8-pt spacing grid.
 - Green is #76B900 for accents and positive money. Never use red for debts.
 - Font is Roboto 300, 400, 500, 700 only.

@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { ComponentRef, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -13,44 +13,53 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { ThemeColors } from '../../theme/colors';
 import { useTheme } from '../../theme/ThemeContext';
+import { isValidEmail, mapAuthError } from '../../lib/auth-helpers';
 
 export default function SignupScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const nameRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const emailRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [nameFocused, setNameFocused] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
   const handleContinue = async () => {
+    setInlineError(null);
+
     if (!name.trim()) {
-      Alert.alert('Quick check', 'What should we call you?');
+      setInlineError('What should we call you?');
       return;
     }
     if (!email.trim()) {
-      Alert.alert('Quick check', 'We need your email to send a verification code.');
+      setInlineError('We need your email to send a verification code.');
+      return;
+    }
+    if (!isValidEmail(email)) {
+      setInlineError("That email doesn't look right. Check for typos.");
       return;
     }
 
     setLoading(true);
-
+    const normalized = email.trim().toLowerCase();
     const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim().toLowerCase(),
-      options: {
-        shouldCreateUser: true,
-      },
+      email: normalized,
+      options: { shouldCreateUser: true },
     });
-
     setLoading(false);
 
     if (error) {
-      Alert.alert('Something went wrong', error.message);
+      setInlineError(mapAuthError(error.message));
       return;
     }
 
     router.push({
       pathname: '/onboarding/verify',
-      params: { email: email.trim().toLowerCase(), name },
+      params: { email: normalized, name: name.trim(), flow: 'signup' },
     });
   };
 
@@ -64,29 +73,46 @@ export default function SignupScreen() {
 
       <View style={styles.body}>
         <Text style={styles.label}>First name</Text>
-        <View style={styles.inputRow}>
+        <Pressable
+          onPress={() => nameRef.current?.focus()}
+          style={[styles.inputRow, nameFocused && styles.inputRowFocused]}
+        >
           <TextInput
+            ref={nameRef}
             style={styles.input}
             placeholder="Sipho"
             placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
+            onFocus={() => setNameFocused(true)}
+            onBlur={() => setNameFocused(false)}
           />
-        </View>
+        </Pressable>
 
         <Text style={styles.label}>Email address</Text>
-        <View style={styles.inputRow}>
+        <Pressable
+          onPress={() => emailRef.current?.focus()}
+          style={[styles.inputRow, emailFocused && styles.inputRowFocused]}
+        >
           <TextInput
-            style={[styles.input, { flex: 1 }]}
+            ref={emailRef}
+            style={styles.input}
             placeholder="sipho@university.ac.za"
             placeholderTextColor={colors.muted}
             keyboardType="email-address"
             autoCapitalize="none"
+            autoComplete="email"
             value={email}
             onChangeText={setEmail}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => setEmailFocused(false)}
           />
-        </View>
+        </Pressable>
+
+        {inlineError ? (
+          <Text style={styles.inlineError}>{inlineError}</Text>
+        ) : null}
 
         <TouchableOpacity
           style={[styles.ctaBtn, loading && { opacity: 0.7 }]}
@@ -95,8 +121,7 @@ export default function SignupScreen() {
         >
           {loading
             ? <ActivityIndicator color={colors.onAccent} />
-            : <Text style={styles.ctaBtnText}>Continue</Text>
-          }
+            : <Text style={styles.ctaBtnText}>Continue</Text>}
         </TouchableOpacity>
 
         <View style={styles.orRow}>
@@ -146,12 +171,25 @@ function createStyles(colors: ThemeColors) {
       color: colors.grey, marginBottom: 4, marginTop: 12,
     },
     inputRow: {
-      flexDirection: 'row', alignItems: 'center',
-      borderBottomWidth: 1.5, borderBottomColor: colors.softGreen,
-      paddingBottom: 10, gap: 6,
+      borderBottomWidth: 1.5,
+      borderBottomColor: colors.inputLine,
+      paddingVertical: 12,
+    },
+    inputRowFocused: {
+      borderBottomColor: colors.green,
     },
     input: {
-      fontSize: 15, fontFamily: 'Roboto_400Regular', color: colors.textDark,
+      fontSize: 15,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.textDark,
+      padding: 0,
+    },
+    inlineError: {
+      marginTop: 12,
+      fontSize: 13,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.grey,
+      lineHeight: 18,
     },
     ctaBtn: {
       backgroundColor: colors.green, borderRadius: 14,

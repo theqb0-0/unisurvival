@@ -30,7 +30,7 @@ export default function SplashScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.secondaryBtn}
-          onPress={() => router.push('/onboarding/signup')}
+          onPress={() => router.push('/onboarding/signin')}
         >
           <Text style={styles.secondaryBtnText}>I already have an account</Text>
         </TouchableOpacity>

@@ -1,8 +1,8 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { ComponentRef, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -13,28 +13,41 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '../../lib/supabase';
 import { ThemeColors } from '../../theme/colors';
 import { useTheme } from '../../theme/ThemeContext';
+import { mapAuthError } from '../../lib/auth-helpers';
 
 export default function SetupScreen() {
   const router = useRouter();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const allowanceRef = useRef<ComponentRef<typeof TextInput>>(null);
+  const paydayRef = useRef<ComponentRef<typeof TextInput>>(null);
   const [allowance, setAllowance] = useState('');
   const [payday, setPayday] = useState('');
+  const [allowanceFocused, setAllowanceFocused] = useState(false);
+  const [paydayFocused, setPaydayFocused] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [inlineError, setInlineError] = useState<string | null>(null);
 
   const handleSetup = async () => {
+    setInlineError(null);
+
     if (!allowance.trim()) {
-      Alert.alert('Quick check', 'How much do you receive each month?');
+      setInlineError('How much do you receive each month?');
       return;
     }
     if (!payday.trim()) {
-      Alert.alert('Quick check', 'Which day of the month does it arrive?');
+      setInlineError('Which day of the month does it arrive?');
       return;
     }
 
-    const paydayNum = parseInt(payday);
-    if (paydayNum < 1 || paydayNum > 31) {
-      Alert.alert('Quick check', 'Enter a valid day between 1 and 31.');
+    const allowanceNum = parseFloat(allowance);
+    const paydayNum = parseInt(payday, 10);
+    if (Number.isNaN(allowanceNum) || allowanceNum <= 0) {
+      setInlineError('Enter a valid allowance amount.');
+      return;
+    }
+    if (Number.isNaN(paydayNum) || paydayNum < 1 || paydayNum > 31) {
+      setInlineError('Payday needs to be a day between 1 and 31.');
       return;
     }
 
@@ -44,22 +57,22 @@ export default function SetupScreen() {
 
     if (!user) {
       setLoading(false);
-      Alert.alert('Session expired', 'Please sign in again.');
-      router.replace('/onboarding/signup');
+      setInlineError('Session expired. Sign in again.');
+      router.replace('/onboarding/signin');
       return;
     }
 
     const { error } = await supabase
       .from('profiles')
       .update({
-        allowance: parseFloat(allowance),
+        allowance: allowanceNum,
         payday: paydayNum,
       })
       .eq('id', user.id);
 
     if (error) {
       setLoading(false);
-      Alert.alert('Something went wrong', error.message);
+      setInlineError(mapAuthError(error.message));
       return;
     }
 
@@ -70,14 +83,14 @@ export default function SetupScreen() {
         user_id: user.id,
         month: now.getMonth() + 1,
         year: now.getFullYear(),
-        allowance: parseFloat(allowance),
+        allowance: allowanceNum,
         spent: 0,
       });
 
     setLoading(false);
 
     if (budgetError) {
-      Alert.alert('Budget not created', budgetError.message);
+      setInlineError(mapAuthError(budgetError.message));
       return;
     }
 
@@ -94,21 +107,31 @@ export default function SetupScreen() {
 
       <View style={styles.body}>
         <Text style={styles.label}>Monthly allowance</Text>
-        <View style={styles.inputRow}>
+        <Pressable
+          onPress={() => allowanceRef.current?.focus()}
+          style={[styles.inputRow, allowanceFocused && styles.inputRowFocused]}
+        >
           <Text style={styles.prefix}>R</Text>
           <TextInput
+            ref={allowanceRef}
             style={[styles.input, { flex: 1 }]}
             placeholder="1500"
             placeholderTextColor={colors.muted}
             keyboardType="numeric"
             value={allowance}
             onChangeText={setAllowance}
+            onFocus={() => setAllowanceFocused(true)}
+            onBlur={() => setAllowanceFocused(false)}
           />
-        </View>
+        </Pressable>
 
         <Text style={styles.label}>Arrives on the</Text>
-        <View style={styles.inputRow}>
+        <Pressable
+          onPress={() => paydayRef.current?.focus()}
+          style={[styles.inputRow, paydayFocused && styles.inputRowFocused]}
+        >
           <TextInput
+            ref={paydayRef}
             style={styles.input}
             placeholder="1"
             placeholderTextColor={colors.muted}
@@ -116,9 +139,15 @@ export default function SetupScreen() {
             maxLength={2}
             value={payday}
             onChangeText={setPayday}
+            onFocus={() => setPaydayFocused(true)}
+            onBlur={() => setPaydayFocused(false)}
           />
           <Text style={styles.suffix}>of each month</Text>
-        </View>
+        </Pressable>
+
+        {inlineError ? (
+          <Text style={styles.inlineError}>{inlineError}</Text>
+        ) : null}
 
         <Text style={styles.hint}>
           You can update these any time in your Profile.
@@ -131,8 +160,7 @@ export default function SetupScreen() {
         >
           {loading
             ? <ActivityIndicator color={colors.onDeep} />
-            : <Text style={styles.ctaBtnText}>Let's go</Text>
-          }
+            : <Text style={styles.ctaBtnText}>Let's go</Text>}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -171,9 +199,15 @@ function createStyles(colors: ThemeColors) {
       color: colors.grey, marginBottom: 4, marginTop: 16,
     },
     inputRow: {
-      flexDirection: 'row', alignItems: 'center',
-      borderBottomWidth: 1.5, borderBottomColor: colors.softGreen,
-      paddingBottom: 10, gap: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderBottomWidth: 1.5,
+      borderBottomColor: colors.inputLine,
+      paddingVertical: 12,
+      gap: 8,
+    },
+    inputRowFocused: {
+      borderBottomColor: colors.green,
     },
     prefix: {
       fontSize: 15, fontFamily: 'Roboto_500Medium', color: colors.green,
@@ -182,7 +216,17 @@ function createStyles(colors: ThemeColors) {
       fontSize: 15, fontFamily: 'Roboto_400Regular', color: colors.grey,
     },
     input: {
-      fontSize: 15, fontFamily: 'Roboto_400Regular', color: colors.textDark,
+      fontSize: 15,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.textDark,
+      padding: 0,
+    },
+    inlineError: {
+      marginTop: 12,
+      fontSize: 13,
+      fontFamily: 'Roboto_400Regular',
+      color: colors.grey,
+      lineHeight: 18,
     },
     hint: {
       fontSize: 11, fontFamily: 'Roboto_400Regular',
