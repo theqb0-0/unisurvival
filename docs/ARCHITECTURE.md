@@ -1,6 +1,6 @@
 # UniSurvival architecture
 
-Last updated 19 Nov 2026 (evening). Update this file when something here stops being true.
+Last updated 20 Nov 2026. Update this file when something here stops being true.
 
 ## What the app is
 South African student money and life app. Tagline: "Make it last." Built solo by Kuhle Njongo. Android first (Play Store), iOS deferred to v1.5.
@@ -9,7 +9,7 @@ South African student money and life app. Tagline: "Make it last." Built solo by
 - Expo SDK 58, React Native, TypeScript, Expo Router (file-based routing)
 - Supabase: Postgres with row-level security, email OTP auth (6-digit code, custom SMTP via Resend)
 - Roboto font (300, 400, 500, 700), Ionicons
-- No payments yet (PayFast planned), no AI yet (Supabase Edge Functions planned)
+- No payments yet (PayFast planned). Receipt parse AI via Edge Function `parse-receipt` (Gemini); more AI planned
 
 ## Folder map
 ```
@@ -46,6 +46,9 @@ src/
 supabase/migrations/
   20261110_money_tasks.sql money_tasks table + RLS (apply in Supabase if missing)
   20261119_shopping_pantry_rls.sql shopping_list + pantry RLS policies (apply if missing)
+  20261120_ai_usage.sql ai_usage daily cap table + read-only RLS (apply if missing)
+supabase/functions/
+  parse-receipt/index.ts JWT, scrub, cap 15/day, Gemini JSON parse (deploy separately)
 docs/
   auth-resume.md           OTP test checklist when connectivity allows
   EAS-PLAY-CHECKLIST.md
@@ -64,6 +67,7 @@ Screens use `const { colors } = useTheme()` and `useMemo(() => createStyles(colo
 - meal_plans: id, user_id, date, slot, meal_name, ingredients, created_at
 - shopping_list: id, user_id, name, estimated_price, purchased, created_at
 - food_budget: id, user_id, month, year, budget, spent, created_at
+- ai_usage: user_id, day, count (PK user_id + day; users read own rows; Edge Function writes via service role)
 
 Extend `pantry` rather than creating a second pantry table.
 
@@ -95,10 +99,11 @@ New: Splash -> Problem -> Signup (name + email, OTP) -> Verify -> Setup only if 
 - Expo starter template UI removed (`app-tabs`, `themed-*`, `animated-icon`, `constants/theme`, old `hooks/use-theme`); `npx tsc --noEmit` clean
 - SQL migration file for `money_tasks` in repo
 - `docs/auth-resume.md` for resuming OTP tests
+- `ai_usage` migration + `parse-receipt` Edge Function (backend only; see `docs/RECEIPT-SCAN-SPEC.md`)
 
 ## Open
 - **Auth:** OTP email end-to-end verification on device (see `docs/auth-resume.md`; UX ready, confirm on device)
-- **Supabase:** Apply `money_tasks` and `shopping_pantry_rls` migrations on the live project if not already run
+- **Supabase:** Apply `money_tasks`, `shopping_pantry_rls`, and `20261120_ai_usage` migrations on the live project if not already run; deploy `parse-receipt` and set `GEMINI_API_KEY` secret
 - **Dead ends / stubs:** Receipt scan (toast only), Notifications and Categories rows labeled "Soon" (no push system yet)
 - **setup.tsx:** signed-out path redirects to signin; budget duplicate insert on returning setup not yet upserted
 - **Snackbar:** Replace remaining `Alert.alert` usage app-wide (Log, setup, verify, debts modals, etc.)
@@ -108,7 +113,7 @@ New: Splash -> Problem -> Signup (name + email, OTP) -> Verify -> Setup only if 
 1. Grocery shopping calculator: running total per item, balance left after each add, saves one Food expense on done
 2. Commitments (subscriptions and debit orders) on Debts tab, subtracted from Home "safe to spend" before payday. Not included in debts net total.
 3. Pantry usage history / most-used analytics (Used already decrements quantity on Pantry screen)
-4. Receipt scan v1: on-device OCR -> Edge Function -> review screen -> Log Expense prefill
+4. Receipt scan v1: on-device OCR, local parser, review screen (Edge Function `parse-receipt` shipped; app flow not yet)
 5. AI spending insights (code computes numbers, model writes copy), Pro only
 6. PayFast and Free/Pro tiers
 
